@@ -8,7 +8,8 @@ local default = {
 	soundtype = 1;
 	icon = 1;
 	ignoreList = {};
-	chatList = {}
+	chatList = {};
+	shout = {}
 	}
 
 local skillName = ' '
@@ -210,6 +211,22 @@ function cdTracker_SetVal(command)
 		cdTracker_LoadSettings()
 		return CHAT_SYSTEM('All settings reset to defaults.')
 	end
+	if (cmd == 'shout') then
+		local skillID = table.remove(command,1)
+		if skillList[tonumber(skillID)] ~= nil then
+			if settings.shout[skillList[tonumber(skillID)]] == 1 then
+				settings.shout[skillList[tonumber(skillID)]] = 0
+				cdTracker_SaveSettings()
+				cdTracker_LoadSettings()
+				return CHAT_SYSTEM('Shout off for '..skillList[tonumber(skillID)]..'.')
+			end
+			settings.shout[skillList[tonumber(skillID)]] = 1
+			cdTracker_SaveSettings()
+			cdTracker_LoadSettings()
+			return CHAT_SYSTEM('Shout on for '..skillList[tonumber(skillID)]..'.')
+		end
+		return CHAT_SYSTEM('Invalid skill ID.')
+	end
 	CHAT_SYSTEM(' ')
 	CHAT_SYSTEM('Available commands:')
 	CHAT_SYSTEM('/cd on')
@@ -266,10 +283,17 @@ function ICON_USE_HOOKED(object, reAction)
 			ui.AddText('SystemMsgFrame',' ')
 			ui.AddText('SystemMsgFrame',' ')
 			
-			ui.AddText('SystemMsgFrame',fullName..' ready in '..cdCheck..' seconds.')
+			ui.AddText('SystemMsgFrame',fullName..' in '..cdCheck..'.')
+		end
+		if settings.shout[fullName] == 1 and cdCheck == 0 then
+			ui.Chat('!!'..string.upper(fullName)..'!!')
 		end
 		if settings.chatList[fullName] == 1 and cdCheck == 0 then
-			ui.Chat('!!Casting '..fullName..'!')
+			if fullName == "Safety Zone" then
+				ui.Chat('!!'..string.upper(fullName)..' HERE!!')
+				ui.Chat('{img emoticon_0020 30 30}{/}')
+				ReserveScript('SOCIAL_POSE(0,0,0,22)', 1.2)
+			end
 			msgDisplay = 1
 			timer = imcTime.GetAppTime()
 		end
@@ -309,18 +333,19 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 					imcSound.PlaySoundEvent(soundTypes[1])
 				end
 			end	
-			if settings.text == 1 and settings.ignoreList[fullName] ~= 1 then
-				ui.AddText('SystemMsgFrame',' ')
-				ui.AddText('SystemMsgFrame',' ')
-				ui.AddText('SystemMsgFrame',' ')
+			-- if settings.text == 1 and settings.ignoreList[fullName] ~= 1 then
+				-- ui.AddText('SystemMsgFrame',' ')
+				-- ui.AddText('SystemMsgFrame',' ')
+				-- ui.AddText('SystemMsgFrame',' ')
 				
-				ui.AddText('SystemMsgFrame',fullName..' ready.')
-			end
-			if settings.chatList[fullName] == 1 then
-				ui.Chat('!!'..fullName..' ready!')
-				msgDisplay = 1
-				timer = imcTime.GetAppTime()
-			end
+				-- ui.AddText('SystemMsgFrame',fullName..' ready.')
+			-- end
+			-- if settings.chatList[fullName] == 1 then
+				-- ui.Chat('!!'..fullName..' ready!')
+				-- msgDisplay = 1
+				-- timer = imcTime.GetAppTime()
+			-- end
+			--SOCIAL_POSE(0,0,0,22)
 			oldVal[fullName] = 0
 			DRAW_READY_ICON(obj,2.5,tonumber(FIND_NEXT_SLOT(iconSlots,fullName)),60,60)
 			iconSlots[tostring(FIND_NEXT_SLOT(iconSlots,fullName))] = 0
@@ -342,7 +367,7 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 			ui.AddText('SystemMsgFrame',fullName..' ready in '..cdCheck..' seconds.')
 		end
 		if settings.chatList[fullName] == 1 then
-			ui.Chat('!!'..fullName..' ready in '..cdCheck..' seconds.')
+			ui.Chat('!!'..fullName..' in '..cdCheck)
 			msgDisplay = 1
 			timer = imcTime.GetAppTime()
 		end
